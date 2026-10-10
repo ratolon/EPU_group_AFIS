@@ -10,6 +10,12 @@ readme = "README.md"
 requires-python = ">=3.14"
 license = "MIT"
 license-files = ["LICENSE.txt"]
+authors = [
+    {name = "Dustin Reed Morado"},
+]
+maintainers = [
+    {name = "ratolon", email = "miceta@cnb.csic.es"},
+]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
@@ -23,6 +29,13 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest"]
+
+[project.urls]
+Homepage = "https://github.com/ratolon/EPU_group_AFIS"
+Repository = "https://github.com/ratolon/EPU_group_AFIS.git"
+Issues = "https://github.com/ratolon/EPU_group_AFIS/issues"
+Changelog = "https://github.com/ratolon/EPU_group_AFIS/blob/master/CHANGELOG"
+Upstream = "https://github.com/DustinMorado/EPU_group_AFIS"
 
 [project.scripts]
 epu_group_afis = "EPU_Group_AFIS:cli"
