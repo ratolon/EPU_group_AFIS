@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sort EPU AFIS data into Optics Groups for RELION 3.1
+"""Sort EPU AFIS data into Optics Groups for RELION 5.0
 
 Written By Dustin Reed Morado
 Last updated 20.06.2020
@@ -13,6 +13,9 @@ from fnmatch import fnmatch
 from functools import partial
 from concurrent.futures import ThreadPoolExecutor
 from xml.etree import ElementTree
+
+STAR_VERSION_OLD = 30001
+STAR_VERSION = 50001
 
 
 def _parse_metadata_file(metadata_path: str | os.PathLike[str],
@@ -294,7 +297,7 @@ def main(xml_dir: str | None = None, n_clusters: int = 1, apix: float = 1.00,
             key=lambda x:(x[0], x[1]))
 
     with open(output_fn, 'w', encoding='utf-8') as f:
-        f.write('\n# version 30001\n\n')
+        f.write(f'\n# version {STAR_VERSION:d}\n\n')
         f.write('data_optics\n\nloop_\n')
         f.write('_rlnOpticsGroupName #1 \n')
         f.write('_rlnOpticsGroup #2 \n')
@@ -309,7 +312,7 @@ def main(xml_dir: str | None = None, n_clusters: int = 1, apix: float = 1.00,
                     f'{mtf_fn}\t{apix:15.6f}\t{voltage:15.6f}\t'
                     f'{cs:15.6f}\t{q0:15.6f}\n')
 
-        f.write(' \n\n# version 30001\n\n')
+        f.write(f' \n\n# version {STAR_VERSION:d}\n\n')
         f.write('data_movies\n\nloop_\n')
         f.write('_rlnMicrographMovieName #1 \n')
         f.write('_rlnOpticsGroup #2 \n')
