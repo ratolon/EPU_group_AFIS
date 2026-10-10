@@ -5,7 +5,8 @@ Image Shift_) for faster acquisition and organizes the collected micrograph
 movies into RELION Optics Groups. In RELION version 3.1 where these groups were
 introduced they can be used to further reduce the effects of high-order
 aberrations on the data induced by collecting using large amounts of beam-image
-shift.
+shift. The output `movies.star` uses the RELION 5.0 STAR format
+(`# version 50001`), matching what `relion_import` writes.
 
 There is a Notebook here that goes through how the processing is done and then a
 script that is for actual processing.

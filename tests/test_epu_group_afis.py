@@ -109,4 +109,4 @@ def test_cli_invokes_processing_with_temp_dataset(tmp_path):
     ])
 
     assert exit_code == 0
-    assert output_path.exists()
+    assert output_path.read_text(encoding="utf-8").count("# version 50001") == 2
