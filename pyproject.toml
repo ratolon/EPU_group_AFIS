@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,12 +7,22 @@ name = "epu-group-afis"
 version = "0.1.0"
 description = "Cluster EPU AFIS beam-shift metadata into RELION optics groups"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.14"
+license = "MIT"
+license-files = ["LICENSE.txt"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.14",
+]
 dependencies = [
     "numpy",
     "matplotlib",
     "scikit-learn",
 ]
+
+[project.optional-dependencies]
+test = ["pytest"]
 
 [project.scripts]
 epu_group_afis = "EPU_Group_AFIS:cli"

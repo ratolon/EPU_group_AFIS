@@ -1,44 +1,44 @@
-#!/usr/bin/env python
-#. -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """Sort EPU AFIS data into Optics Groups for RELION 3.1
 
 Written By Dustin Reed Morado
 Last updated 20.06.2020
 """
 
-from __future__ import print_function, division
-
 import os
 import argparse
 
+from collections.abc import Iterable, Sequence
 from fnmatch import fnmatch
 from functools import partial
 from concurrent.futures import ThreadPoolExecutor
 from xml.etree import ElementTree
 
 
-def _parse_metadata_file(metadata_path, namespace):
+def _parse_metadata_file(metadata_path: str | os.PathLike[str],
+                         namespace: dict[str, str]) -> list[float]:
     metadata_path = os.fspath(metadata_path)
     metadata = ElementTree.parse(metadata_path)
     beam_shift = metadata.findall(
         'fei:microscopeData/fei:optics/fei:BeamShift', namespace)
 
     if len(beam_shift) == 0:
-        raise ValueError('No BeamShift found in {}'.format(metadata_path))
+        raise ValueError(f'No BeamShift found in {metadata_path}')
     elif len(beam_shift[0]) != 2:
-        raise ValueError('Improper BeamShift found in {}'.format(metadata_path))
+        raise ValueError(f'Improper BeamShift found in {metadata_path}')
 
     return [float(x.text) for x in beam_shift[0]]
 
 
-def _index_movie_files(movie_dir, ftype, metadata_roots):
+def _index_movie_files(movie_dir: str, ftype: str,
+                       metadata_roots: Iterable[str]) -> dict[str, str]:
     movie_dir = os.path.abspath(movie_dir)
-    indexed = {}
+    indexed: dict[str, str] = {}
     roots = [root for root in metadata_roots if root]
 
     for dirpath, _, filenames in os.walk(movie_dir, followlinks=True):
         for filename in filenames:
-            if not filename.endswith('.{0}'.format(ftype)):
+            if not filename.endswith(f'.{ftype}'):
                 continue
 
             lower_name = filename.lower()
@@ -51,7 +51,7 @@ def _index_movie_files(movie_dir, ftype, metadata_roots):
     return indexed
 
 
-def _configure_sklearn_threads(thread_count):
+def _configure_sklearn_threads(thread_count: int) -> None:
     thread_count = int(thread_count)
     if thread_count < 1:
         raise ValueError('thread_count must be positive')
@@ -62,10 +62,11 @@ def _configure_sklearn_threads(thread_count):
         os.environ[key] = str(thread_count)
 
 
-def cli(argv=None):
+def cli(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
             description = "Create Optics Groups from EPU AFIS data",
-            epilog = "Writted by Dustin Morado 20.06.2020")
+            epilog = "Writted by Dustin Morado 20.06.2020",
+            suggest_on_error = True)
 
     parser.add_argument('--xml_dir', '-i', type = str, required = True,
             help = ('Path to directory with EPU record metadata XML files. '
@@ -130,22 +131,26 @@ def cli(argv=None):
     return 0
 
 
-def main(xml_dir = os.getcwd(), n_clusters = 1, apix = 1.00,
-         mtf_fn = 'MTF.star', voltage = 300.0, cs = 2.7, q0 = 0.1,
-         ftype = 'mrc', movie_dir = '', movie_suffix = 'Fractions',
-         output_fn = 'movies.star', algorithm = 'kmeans', quiet = False,
-         workers = 1):
+def main(xml_dir: str | None = None, n_clusters: int = 1, apix: float = 1.00,
+         mtf_fn: str = 'MTF.star', voltage: float = 300.0, cs: float = 2.7,
+         q0: float = 0.1, ftype: str = 'mrc', movie_dir: str = '',
+         movie_suffix: str = 'Fractions', output_fn: str = 'movies.star',
+         algorithm: str = 'kmeans', quiet: bool = False,
+         workers: int | None = 1) -> None:
 
-    metadata_fns = []
+    if xml_dir is None:
+        xml_dir = os.getcwd()
 
-    for dirpath, dirnames, filenames in os.walk(xml_dir, followlinks=True):
+    metadata_fns: list[str] = []
+
+    for dirpath, _, filenames in os.walk(xml_dir, followlinks=True):
         for filename in filenames:
             if (fnmatch(filename, 'FoilHole_*_Data_*.xml')
                     and not fnmatch(filename, '*ractions.xml')):
 
                 metadata_fns.append(os.path.join(dirpath, filename))
 
-    if len(metadata_fns) == 0:
+    if not metadata_fns:
         raise ValueError('No EPU XML metadata files found')
 
     namespace = {'fei' :
@@ -216,7 +221,7 @@ def main(xml_dir = os.getcwd(), n_clusters = 1, apix = 1.00,
         optics_clusters = hac.labels_
         cluster_centers = [[np.average(shift_array[optics_clusters==x][:,0]),
                             np.average(shift_array[optics_clusters==x][:,1])]
-                           for x in set(sorted(optics_clusters))]
+                           for x in np.unique(optics_clusters)]
 
     radii = [x[0]**2 + x[1]**2 for x in cluster_centers]
     sort_idxs = sorted(enumerate(radii), key=lambda x:x[1])
@@ -277,7 +282,7 @@ def main(xml_dir = os.getcwd(), n_clusters = 1, apix = 1.00,
                 cmap='tab20')
 
         for optics_group in range(n_clusters):
-            axes.annotate('{0:d}'.format(optics_group + 1),
+            axes.annotate(f'{optics_group + 1:d}',
                     xy = cluster_centers[sort_idxs[optics_group]],
                     textcoords = 'offset pixels', xytext=(10, 10))
 
@@ -285,10 +290,10 @@ def main(xml_dir = os.getcwd(), n_clusters = 1, apix = 1.00,
         _ = input('If happy with cluster press any key (Ctrl-C to abort)')
         plt.close('all')
 
-    entries = sorted(zip(metadata_fns, optics_groups),
+    entries = sorted(zip(metadata_fns, optics_groups, strict=True),
             key=lambda x:(x[0], x[1]))
 
-    with open(output_fn, 'w') as f:
+    with open(output_fn, 'w', encoding='utf-8') as f:
         f.write('\n# version 30001\n\n')
         f.write('data_optics\n\nloop_\n')
         f.write('_rlnOpticsGroupName #1 \n')
@@ -300,9 +305,9 @@ def main(xml_dir = os.getcwd(), n_clusters = 1, apix = 1.00,
         f.write('_rlnAmplitudeContrast #7 \n')
 
         for optics_group in range(1, n_clusters + 1):
-            f.write(('opticsGroup{0:d}\t{1:d}\t{2}\t{3:15.6f}\t{4:15.6f}\t'
-                     '{5:15.6f}\t{6:15.6f}\n').format(optics_group,
-                     optics_group, mtf_fn, apix, voltage, cs, q0))
+            f.write(f'opticsGroup{optics_group:d}\t{optics_group:d}\t'
+                    f'{mtf_fn}\t{apix:15.6f}\t{voltage:15.6f}\t'
+                    f'{cs:15.6f}\t{q0:15.6f}\n')
 
         f.write(' \n\n# version 30001\n\n')
         f.write('data_movies\n\nloop_\n')
@@ -311,15 +316,15 @@ def main(xml_dir = os.getcwd(), n_clusters = 1, apix = 1.00,
 
         for metadata_fn, optics_group in entries:
             base = os.path.basename(metadata_fn)
-            root, ext = os.path.splitext(base)
+            root, _ = os.path.splitext(base)
             movie_fn = None
 
             if root in movie_lookup:
                 movie_fn = movie_lookup[root]
             else:
-                movie_glob = '*{0}*ractions.{1}'.format(root, ftype)
+                movie_glob = f'*{root}*ractions.{ftype}'
 
-                for dirpath, dirnames, filenames in os.walk(movie_dir, followlinks=True):
+                for dirpath, _, filenames in os.walk(movie_dir, followlinks=True):
                     for filename in filenames:
                         if fnmatch(filename, movie_glob):
                             movie_fn = os.path.join(dirpath, filename)
@@ -329,12 +334,13 @@ def main(xml_dir = os.getcwd(), n_clusters = 1, apix = 1.00,
                         break
 
             if movie_fn is None:
-                movie_fn = '{0}_{1}.{2}'.format(
-                        os.path.join(movie_dir, root), movie_suffix, ftype)
+                movie_fn = (f'{os.path.join(movie_dir, root)}_'
+                            f'{movie_suffix}.{ftype}')
 
-            f.write('{0}\t{1:d}\n'.format(movie_fn, optics_group))
+            f.write(f'{movie_fn}\t{optics_group:d}\n')
 
         f.write(' \n')
+
 
 if __name__ == '__main__':
     raise SystemExit(cli())
