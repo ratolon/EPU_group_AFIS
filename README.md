@@ -20,13 +20,33 @@ tested it using:
  * scikit-learn (_Version >= 0.22.1_) 
  * matplotlib (_Version >= 3.1.3_)
 
+## Installation
+
+Install the package in editable mode from the repository root so the command becomes available as `epu_group_afis`:
+
+```bash
+python -m pip install -e .
+```
+
+If you prefer a regular installation instead of editable mode, use:
+
+```bash
+python -m pip install .
+```
+
+After installation, you can invoke the tool directly as:
+
+```bash
+epu_group_afis --xml_dir /path/to/xml --quiet
+```
+
 ## Usage
 ```
-usage: EPU_Group_AFIS.py [-h] --xml_dir XML_DIR [--n_clusters N_CLUSTERS]
-                         [--apix APIX] [--mtf_fn MTF_FN] [--voltage VOLTAGE]
-                         [--cs CS] [--q0 Q0] [--ftype FTYPE]
-                         [--movie_dir MOVIE_DIR] [--output_fn OUTPUT_FN]
-                         [--quiet]
+usage: epu_group_afis [-h] --xml_dir XML_DIR [--n_clusters N_CLUSTERS]
+                      [--apix APIX] [--mtf_fn MTF_FN] [--voltage VOLTAGE]
+                      [--cs CS] [--q0 Q0] [--ftype FTYPE]
+                      [--movie_dir MOVIE_DIR] [--output_fn OUTPUT_FN]
+                      [--quiet] [--workers WORKERS]
 
 Create Optics Groups from EPU AFIS data
 
@@ -48,6 +68,7 @@ optional arguments:
   --output_fn OUTPUT_FN, -o OUTPUT_FN
                         Path to output STAR file. [movies.star]
   --quiet, -q           Run non-interactively with no plotting. [False]
+  --threads
 
 Writted by Dustin Morado 20.06.2020
 ```
