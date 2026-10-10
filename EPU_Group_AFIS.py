@@ -2,7 +2,7 @@
 """Sort EPU AFIS data into Optics Groups for RELION 5.0
 
 Written By Dustin Reed Morado
-Last updated 20.06.2020
+Last updated 10.10.2026 by Mikel Iceta
 """
 
 import os
